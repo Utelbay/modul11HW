@@ -1,0 +1,173 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class Book
+{
+    public string Title { get; private set; }
+    public string Author { get; private set; }
+    public string ISBN { get; private set; }
+    public bool IsAvailable { get; set; }
+
+    public Book(string title, string author, string isbn)
+    {
+        Title = title;
+        Author = author;
+        ISBN = isbn;
+        IsAvailable = true;
+    }
+}
+
+class Reader
+{
+    public string Name { get; private set; }
+    private List<Book> rentedBooks = new List<Book>();
+    private const int MaxBooksAllowed = 3;
+
+    public Reader(string name)
+    {
+        Name = name;
+    }
+
+    public bool RentBook(Book book)
+    {
+        if (rentedBooks.Count >= MaxBooksAllowed)
+        {
+            Console.WriteLine($"{Name} не может взять больше книг.");
+            return false;
+        }
+
+        if (!book.IsAvailable)
+        {
+            Console.WriteLine($"Книга \"{book.Title}\" недоступна для аренды.");
+            return false;
+        }
+
+        book.IsAvailable = false;
+        rentedBooks.Add(book);
+        Console.WriteLine($"{Name} взял в аренду книгу \"{book.Title}\".");
+        return true;
+    }
+
+    public void ReturnBook(Book book)
+    {
+        if (rentedBooks.Remove(book))
+        {
+            book.IsAvailable = true;
+            Console.WriteLine($"{Name} вернул книгу \"{book.Title}\".");
+        }
+        else
+        {
+            Console.WriteLine($"Книга \"{book.Title}\" не была взята {Name}.");
+        }
+    }
+
+    public void ShowRentedBooks()
+    {
+        Console.WriteLine($"{Name} арендовал следующие книги:");
+        foreach (var book in rentedBooks)
+        {
+            Console.WriteLine($"- {book.Title} by {book.Author}");
+        }
+    }
+}
+
+class Librarian
+{
+    public string Name { get; private set; }
+    private Library library;
+
+    public Librarian(string name, Library library)
+    {
+        Name = name;
+        this.library = library;
+    }
+
+    public void AddBook(Book book)
+    {
+        library.AddBook(book);
+        Console.WriteLine($"Библиотекарь {Name} добавил книгу \"{book.Title}\" в библиотеку.");
+    }
+
+    public void ShowAllBooks()
+    {
+        library.ShowBooks();
+    }
+
+    public void ShowAvailableBooks()
+    {
+        library.ShowAvailableBooks();
+    }
+}
+
+class Library
+{
+    private List<Book> books = new List<Book>();
+
+    public void AddBook(Book book)
+    {
+        books.Add(book);
+    }
+
+    public void ShowBooks()
+    {
+        Console.WriteLine("Все книги в библиотеке:");
+        foreach (var book in books)
+        {
+            string status = book.IsAvailable ? "в наличии" : "арендована";
+            Console.WriteLine($"- {book.Title} by {book.Author} (ISBN: {book.ISBN}) - {status}");
+        }
+    }
+
+    public void ShowAvailableBooks()
+    {
+        Console.WriteLine("Доступные книги:");
+        foreach (var book in books.Where(b => b.IsAvailable))
+        {
+            Console.WriteLine($"- {book.Title} by {book.Author}");
+        }
+    }
+
+    public Book FindBookByTitle(string title)
+    {
+        return books.FirstOrDefault(b => b.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public Book FindBookByAuthor(string author)
+    {
+        return books.FirstOrDefault(b => b.Author.Equals(author, StringComparison.OrdinalIgnoreCase));
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Library library = new Library();
+        Librarian librarian = new Librarian("Анна", library);
+
+        librarian.AddBook(new Book("Преступление и наказание", "Ф.М. Достоевский", "978-5-17-066146-7"));
+        librarian.AddBook(new Book("Война и мир", "Л.Н. Толстой", "978-5-17-084436-5"));
+        librarian.AddBook(new Book("Мастер и Маргарита", "М.А. Булгаков", "978-5-17-087605-2"));
+
+        Reader reader = new Reader("Иван");
+
+        librarian.ShowAllBooks();
+        Console.WriteLine();
+
+        Book bookToRent = library.FindBookByTitle("Война и мир");
+
+        if (bookToRent != null)
+        {
+            reader.RentBook(bookToRent);
+        }
+
+        Console.WriteLine();
+        librarian.ShowAvailableBooks();
+
+        Console.WriteLine();
+        reader.ReturnBook(bookToRent);
+
+        librarian.ShowAvailableBooks();
+    }
+}
